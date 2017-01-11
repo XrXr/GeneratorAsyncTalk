@@ -1,0 +1,248 @@
+<html>
+<head>
+  <link rel="stylesheet" href="talkie.min.css">
+  <link rel="stylesheet" href="talkie-default.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/monokai_sublime.min.css">
+  <style type="text/css">
+    [layout] > * {
+      margin: 10px 100px;
+    }
+    [layout] ul {
+      color: wheat;
+      list-style-type: disc;
+    }
+    section[data-page="2"] pre:nth-child(3) {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<script layout="code" type="text/x-markdown">
+### Generators and Async Functions
+
+##### Alan Wu
+</script>
+
+<script layout="code" type="text/x-markdown">
+## The age old problem
+```js
+function work() {
+  let data = fs.readFileSync('whereto');
+  let response = requestSync(data);
+  return response.body;
+}
+```
+
+```js
+function work(cb) {
+  fs.readFile('whereto', (err, data) => {
+    if (err)
+      return cb(err);
+    request(data, (err, response, body) => {
+      if (err)
+        return cb(err);
+      cb(body);
+    });
+  });
+}
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## The age old problem
+```js
+function work() {
+  let data = fs.readFileSync('whereto');
+  let response = requestSync(data);
+  return response.body;
+}
+```
+
+```js
+function work(cb) {
+  fs.readFile('whereto', (err, data) => {
+    if (err)
+      return cb(err);
+    request(data, (err, response, body) => {
+      if (err)
+        return cb(err);
+      cb(body);
+    });
+  });
+}
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## The promise
+```js
+function work() {
+  let data = fs.readFileSync('whereto');
+  let response = requestSync(data);
+  return response.body;
+}
+```
+
+to
+
+```js
+function* work() {
+  let data = yield fs.readFile('whereto');
+  let response = yield request(data);
+  return response.body;
+}
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Generator 101
+<!-- During the talk, show the generator execution illustrations -->
+</script>
+
+<script layout="code" type="text/x-markdown">
+## How to use these mechanisms for async flow control?
+
+- `yield` when waiting for an aync task
+- Get resumed with result when task is done
+- Use `yield*` to consume pre-made async operations
+</script>
+
+<script layout="code" type="text/x-markdown">
+## The orchestrator
+
+```js
+function run(gen) {
+    function step(error, result) {
+        let done, value;
+        if (error) {
+            ({ done, value } = gen.throw(error));
+        } else {
+            ({ done, value } = gen.next(result));
+        }
+        if (done) {
+            return;
+        }
+        value.then(result => step(null, result),
+                   error => step(error));
+    }
+    step();
+}
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+```js
+run(work());
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Enter async functions
+
+```js
+async function work() {
+  let data = await fs.readFile('whereto');
+  let response = await request(data);
+  return response.body;
+}
+
+work() instanceof Promise  // true
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Generators
+
+```js
+function* findUser(indexedDBTrans, id) {
+  let store = indexedDBTrans.objectStore("user");
+  let result = yield store.openCursor(id);
+  return result;
+}
+```
+
+### More than just promises
+</script>
+
+<script layout="code" type="text/x-markdown">
+### Your choice of when resume happens
+
+```js
+function* findUser(id) {
+  let result = yield requestUser(id);
+  // can resume synchronously
+  console.log("Hi");
+  return result;
+}
+
+run(findUser(100));
+console.log("It's me");
+
+// Hi
+// It's me
+```
+</script>
+
+
+<script layout="code" type="text/x-markdown">
+### No choice of when resume happens
+
+```js
+async function findUser(id) {
+  let result = await requestUser(id);
+  // always next round
+  console.log("Hi");
+  return result;
+}
+
+findUser(100);
+console.log("It's me");
+
+// It's me
+// Hi
+```
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Async functions
+
+- Effortless integration
+- Nice syntax
+- Amazing for promise-heavy codebase
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Generator
+
+- Availabe in Node and browsers today!
+- Wide range of options
+- Can become quite complex
+</script>
+
+<script layout="code" type="text/x-markdown">
+# Please
+## Evaluate your options
+</script>
+
+<script layout="code" type="text/x-markdown">
+## Thank you
+</script>
+
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/highlight.min.js"></script>
+<script src="talkie.min.js"></script>
+<script>
+  let t = Talkie();
+  let keyPage = t.key('`').withLatestFrom(t.changed,
+    (_, elem) => Number(elem.dataset.page));
+  keyPage.scan((x, y) => [x[1], y], [null, 4]).subscribe(([last, cur]) => {
+    let whereto = cur == 4 ? last : 4;
+    t.jump$.next(whereto);
+  });
+</script>
+</body>
+</html>
